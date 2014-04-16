@@ -1,4 +1,5 @@
 <?php
+setlocale(LC_ALL, 'UTF-8');
 /***********************************************************************
 * CLASS player
 * Basic class for a player. Mainly holds values like 'TotalGoals'

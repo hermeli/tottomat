@@ -1,4 +1,6 @@
 <?php
+setlocale(LC_ALL, 'UTF-8');
+
 require_once('config.php'); 
 require_once('classes.php');
 
@@ -31,8 +33,6 @@ function CalculatePlayerScore()
 {
 	global $player;
 	global $matches;
-	
-	//global $username;
 	global $PlayerScore;
 	global $mas;
 
@@ -446,7 +446,7 @@ function CalculateLastSixteenFinals()
 	
 	if ($player->groupFavorite=="")
 	{
-		MessageBox("Bitte Jokergruppe angeben!");
+		MessageBox("Bitte eine Jokergruppe anklicken (Auswahl A bis H)!");
 		return;
 	}
 	
@@ -489,20 +489,37 @@ function CalculateLastSixteenFinals()
 	// load calculated finalists from group matches
 	$matches[48]->team1 = GetTeamWithRank("A",1);
 	$matches[48]->team2 = GetTeamWithRank("B",2);
+	$matches[48]->matchRes = "";
 	$matches[49]->team1 = GetTeamWithRank("C",1);
 	$matches[49]->team2 = GetTeamWithRank("D",2);
+	$matches[49]->matchRes = "";
 	$matches[50]->team1 = GetTeamWithRank("B",1);
 	$matches[50]->team2 = GetTeamWithRank("A",2);
+	$matches[50]->matchRes = "";
 	$matches[51]->team1 = GetTeamWithRank("D",1);
 	$matches[51]->team2 = GetTeamWithRank("C",2);
+	$matches[52]->matchRes = "";
 	$matches[52]->team1 = GetTeamWithRank("E",1);
 	$matches[52]->team2 = GetTeamWithRank("F",2);
+	$matches[52]->matchRes = "";
 	$matches[53]->team1 = GetTeamWithRank("G",1);
 	$matches[53]->team2 = GetTeamWithRank("H",2);
+	$matches[53]->matchRes = "";
 	$matches[54]->team1 = GetTeamWithRank("F",1);
 	$matches[54]->team2 = GetTeamWithRank("E",2);
+	$matches[54]->matchRes = "";
 	$matches[55]->team1 = GetTeamWithRank("H",1);
 	$matches[55]->team2 = GetTeamWithRank("G",2);
+	$matches[55]->matchRes = "";
+	
+	// clear all following teams & matches
+	for ($i=56; $i<64; $i++)
+	{
+		$matches[$i]->team1 = "";
+		$matches[$i]->team2 = "";
+		$matches[$i]->matchRes = "";
+	}
+	$player->champion = "";
 }
 /***********************************************************************
 * function CalculateQuarterFinals()
@@ -518,10 +535,7 @@ function CalculateQuarterFinals()
 	for ($i=48; $i<56; $i++)
 	{
 		$team1 = $matches[$i]->team1->name;
-		$team2 = $matches[$i]->team2->name;
-		
-		print "Team1:$content1 Team2:$team2";
-		
+		$team2 = $matches[$i]->team2->name;		
 		if ( ($team1=="")||($team2=="")||($team1==$team2) )
 		{
 			MessageBox("Bitte zuerst Achtelfinalgegner berechnen! ($i)");
@@ -538,14 +552,27 @@ function CalculateQuarterFinals()
 	}
 	
 	// Berechne die Viertefinalteilnehmer
-	$matches[56]->team1 = GetWinner($matches[48]);
-	$matches[56]->team2 = GetWinner($matches[49]);
-	$matches[57]->team1 = GetWinner($matches[50]);
-	$matches[57]->team2 = GetWinner($matches[51]);
-	$matches[58]->team1 = GetWinner($matches[52]);
-	$matches[58]->team2 = GetWinner($matches[53]);
-	$matches[59]->team1 = GetWinner($matches[54]);
-	$matches[59]->team2 = GetWinner($matches[55]);
+	$matches[56]->team1 = GetWinner($matches[47+5]); 	// AF5
+	$matches[56]->team2 = GetWinner($matches[47+6]);	// AF6
+	$matches[56]->matchRes = "";
+	$matches[57]->team1 = GetWinner($matches[47+1]);	// AF1
+	$matches[57]->team2 = GetWinner($matches[47+2]);	// AF2
+	$matches[57]->matchRes = "";
+	$matches[58]->team1 = GetWinner($matches[47+7]);	// AF7
+	$matches[58]->team2 = GetWinner($matches[47+8]);	// AF8
+	$matches[58]->matchRes = "";
+	$matches[59]->team1 = GetWinner($matches[47+3]);	// AF3
+	$matches[59]->team2 = GetWinner($matches[47+4]);	// AF4
+	$matches[59]->matchRes = "";
+	
+	// clear all following teams & matches
+	for ($i=60; $i<64; $i++)
+	{
+		$matches[$i]->team1 = "";
+		$matches[$i]->team2 = "";
+		$matches[$i]->matchRes = "";
+	}
+	$player->champion = "";
 }
 
 /***********************************************************************
@@ -555,13 +582,13 @@ function CalculateQuarterFinals()
 function CalculateHalfFinals()
 {		
 	global $matches;
+	global $player;
 	
 	// Prüfe zuerst, ob alle Viertelfinalgegner i.O. sind
 	for ($i=56; $i<60; $i++)
 	{
-		$team1 = $_POST['Game'.$i.'_T1'];
-		$team2 = $_POST['Game'.$i.'_T2'];
-		
+		$team1 = $matches[$i]->team1->name;
+		$team2 = $matches[$i]->team2->name;
 		if ( ($team1=="")||($team2=="")||($team1==$team2) )
 		{
 			MessageBox("Bitte zuerst Viertelfinalgegner berechnen!");
@@ -578,10 +605,21 @@ function CalculateHalfFinals()
 	}
 	
 	// Berechne die Halbfinalteilnehmer
-	$matches[60]->team1 = GetWinner($matches[56]);
-	$matches[60]->team2 = GetWinner($matches[57]);
-	$matches[61]->team1 = GetWinner($matches[58]);
-	$matches[61]->team2 = GetWinner($matches[59]);
+	$matches[60]->team1 = GetWinner($matches[55+1]);	// VF1
+	$matches[60]->team2 = GetWinner($matches[55+2]);	// VF2
+	$matches[60]->matchRes = "";
+	$matches[61]->team1 = GetWinner($matches[55+4]);	// VF4
+	$matches[61]->team2 = GetWinner($matches[55+3]);	// VF3
+	$matches[61]->matchRes = "";
+	
+	// clear all following teams & matches
+	for ($i=62; $i<64; $i++)
+	{
+		$matches[$i]->team1 = "";
+		$matches[$i]->team2 = "";
+		$matches[$i]->matchRes = "";
+	}
+	$player->champion = "";
 }
 /***********************************************************************
 * function CalculateFinals()
@@ -590,13 +628,13 @@ function CalculateHalfFinals()
 function CalculateFinals()
 {	
 	global $matches;
+	global $player;
 		
 	// Prüfe zuerst, ob alle Halbfinalspiele i.O. sind
 	for ($i=60; $i<62; $i++)
 	{
-		$team1 = $_POST['Game'.$i.'_T1'];
-		$team2 = $_POST['Game'.$i.'_T2'];
-		
+		$team1 = $matches[$i]->team1->name;
+		$team2 = $matches[$i]->team2->name;
 		if ( ($team1=="")||($team2=="")||($team1==$team2) )
 		{
 			MessageBox("Bitte zuerst Halbfinalgegner berechnen!");
@@ -615,8 +653,12 @@ function CalculateFinals()
 	// Berechne die Finalteilnehmer
 	$matches[62]->team1 = GetLooser($matches[60]);
 	$matches[62]->team2 = GetLooser($matches[61]);
+	$matches[62]->matchRes = "";
 	$matches[63]->team1 = GetWinner($matches[60]);
 	$matches[63]->team2 = GetWinner($matches[61]);
+	$matches[63]->matchRes = "";
+	
+	$player->champion = "";
 }
 /***********************************************************************
 * function CalculateChampion()
@@ -630,9 +672,8 @@ function CalculateChampion()
 	// Prüfe zuerst, ob alle Finalspiele i.O. sind
 	for ($i=62; $i<64; $i++)
 	{
-		$team1 = $_POST['Game'.$i.'_T1'];
-		$team2 = $_POST['Game'.$i.'_T2'];
-		
+		$team1 = $matches[$i]->team1->name;
+		$team2 = $matches[$i]->team2->name;
 		if ( ($team1=="")||($team2=="")||($team1==$team2) )
 		{
 			MessageBox("Bitte zuerst Finalgegner berechnen!");
@@ -670,8 +711,9 @@ function GetTeam($tname)
 			return $team;
 		}
 	}
-	
-	MessageBox("Programming error GetTeam ($tname unknown)!");
+	MessageBox("Programming error GetTeam ($tname) unknown)!");
+	$e = new Exception;
+	var_dump($e->getTraceAsString());
 }
 
 /***********************************************************************
@@ -764,8 +806,8 @@ function SaveMatchesToDB()
 		{
 			$T1 = 'Game'.$i.'_T1';
 			$T2 = 'Game'.$i.'_T2';
-			$sql = $sql . ", Game".$i."_T1='".$matches[$i]->team1->name.
-			"', Game${i}_T2='" . $matches[$i]->team2->name . "' "; 
+			$sql = $sql . ", Game".$i."_T1='".utf8_decode($matches[$i]->team1->name).
+			"', Game${i}_T2='" . utf8_decode($matches[$i]->team2->name) . "' "; 
 		}
 		$sql = $sql . "WHERE PlayerName='".$player->username."'";		
 
@@ -806,8 +848,8 @@ function LoadMatchesFrom($source)
 		{
 			$index1="Game" . $i . "_T1";
 			$index2="Game" . $i . "_T2";
-			$matches[$i]->team1 = GetTeam($dbvals[$index1]);
-			$matches[$i]->team2 = GetTeam($dbvals[$index2]);
+			$matches[$i]->team1 = GetTeam(utf8_encode($dbvals[$index1]));
+			$matches[$i]->team2 = GetTeam(utf8_encode($dbvals[$index2]));
 		}
 	}
 	elseif ($source == "POST")
@@ -877,11 +919,15 @@ function GetTeamWithRank($group,$rank)
 * checkt alle Game-Eingabefelder und gibt die Game-Fehlernummer zurück
 ***********************************************************************/
 function checkAllGames()
-{	
+{
+	global $matches;
+	global $player;
+		
 	for ($i=0; $i<64; $i++)
 	{
 		$j = $i+1;
-		$game = $_POST['Game'.$i];
+		//$game = utf8_encode($_POST['Game'.$i]);
+		$game = $matches[$i]->matchRes;
 		
 		if ($game == "") return $j;
 		if ($game == "-") return $j;
@@ -907,10 +953,14 @@ function checkAllGames()
 ***********************************************************************/
 function checkAllTeams()
 {	
+	global $matches;
+	
 	for ($i=48; $i<64; $i++)
 	{
-		$team1 = $_POST['Game'.$i.'_T1'];
-		$team2 = $_POST['Game'.$i.'_T2'];
+		//$team1 = utf8_encode($_POST['Game'.$i.'_T1']);
+		$team1 = $matches[$i]->team1->name;
+		//$team2 = utf8_encode($_POST['Game'.$i.'_T2']);
+		$team2 = $matches[$i]->team2->name;
 		
 		if ( ($team1=="")||($team2=="")||($team1==$team2) )
 			return $i;
@@ -927,7 +977,12 @@ function isFormComplete()
 	$eGame=checkAllGames();
 	$eTeam=checkAllTeams();
 	if ( ($eGame!=-1) || ($eTeam!=-1) || $_POST['GroupFavorite']=="" || $_POST['TotalGoals']=="0" )
+	{
+		// MessageBox("eGame:$eGame,eTeam:$eTeam");
+		// $e = new Exception;
+		// var_dump($e->getTraceAsString());
 		return 0;
+	}
 	else
 		return 1;
 }
