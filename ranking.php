@@ -1,17 +1,20 @@
 <?php
 /***********************************************************************
- * ranking.php 
- *
- * Ranking form for Trikot-Totto PHP application. 
- * Written by Stefan Wyss in 2014
- **********************************************************************/
+* Trikot-Totto Tottomat (Tippspiel für die Fussball EM/WM) 
+* ----------------------------------------------------------------------
+* Datei: ranking.php
+* 
+* Ausgabe der Rangliste der Spieler
+*
+* Email: wyss@superspider.net
+***********************************************************************/
 require_once('util.php'); 
 require_once('config.php'); 
 require_once('classes.php');
 require_once('teaminit.php');
 
 global $username;
-global $Points;
+global $mas;
 
 // Ausgabe des HTML Headers mit CSS Styles
 printHeader();
@@ -27,11 +30,10 @@ $user =& JFactory::getUser();
 $username = $user->username;
 if ($username == "") die ('Der Benutzer ist nicht angemeldet!');
 
-global $mas;
 //*****************************************************************************
 // Berechnung der Punkte aller Spieler
 //***************************************************************************** 
-// Verbindung zum MySQL Server herstellen und Datenbank w‰hlen
+// Verbindung zum MySQL Server herstellen und Datenbank wählen
 $db=mysql_connect($db_serv, $db_user, $db_pass) or die ('I cannot connect to the database because: ' . mysql_error()); 
 mysql_select_db($db_name, $db) or die('ERROR!');
 
@@ -40,12 +42,12 @@ $qresult = mysql_fetch_array($query);
 
 //DebugMsg("<p>Die Datenbank hat $qresult[0] Eintraege (inkl. Master)</p>");
 
-$queryList = mysql_query("select * from wmtotto2014 where PlayerName != 'Master';") or die(mysql_error());
-$queryMaster = mysql_query("select * from wmtotto2014 where PlayerName = 'Master';") or die(mysql_error());
-	
-// Berechnungsschleife zur Berechnung der Punkte einzelner Spieler	
+// Laden der Matches des master-Eintrags
+$queryMaster = mysql_query("select * from wmtotto2014 where PlayerName = 'master';") or die(mysql_error());
 $mas = mysql_fetch_array($queryMaster);
 
+// Laden der Matches aller User
+$queryList = mysql_query("select * from wmtotto2014 where PlayerName != 'master';") or die(mysql_error());		
 do
 {
 	$qresult = mysql_fetch_array($queryList);
@@ -53,30 +55,31 @@ do
 	$FormComplete = $qresult['FormComplete'];
 	if ($FormComplete != 1) continue;
 	
-	// the teams and matches
+	// erstellen aller Teams and Matches
 	$teams = array();
 	$matches = array();
 	InitTeamsAndMatches();
 		
 	$player = NEW player();
 	$player->score = 0;
-	$PlayerScore = 0;
 	$player->username = $qresult['PlayerName'];
 	
-	// Berechne Punkte für diesen Spieler
+	// Lade die Spielresultate aus der DB und berechne Punkte für diesen Spieler
+	LoadMatchesFrom("DB");
 	CalculatePlayerScore();
-	$nme = $player->username;
-	$pts = $player->score;
 	
 	// Speichere Punkte für diesen Spieler in der Datenbank
 	SavePlayerScoreToDB();
 	
 	$Name = $player->username;
-	$Points = $player->score;	
-	$PlayerList["$Name"] = $Points;
+	$PlayerList["$Name"] = $player->score;
 }
 while ( !empty($qresult) );
+mysql_close($db);
 
+//*****************************************************************************
+// Anzeigen der Spielertabelle 
+//***************************************************************************** 
 print "<form action='form.php' method='post'>";
 print "<table align='center' width='800px' border='0' cellspacing='0' cellpadding='1'>";
 
@@ -113,12 +116,5 @@ foreach ($PlayerList as $key => $value) {
 		print "<tr bgcolor=$color[$bg]><td>$rank</td><td>$key</td><td>$value</td></tr>";
 	$old_value = $value;
 }
-
 print "</table></form>";
-
-//echo "<pre>";
-//print_r($PlayerList);
-//echo "</pre>";
-
-mysql_close($db);
 ?>		

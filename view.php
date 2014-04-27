@@ -1,8 +1,17 @@
 <?php
 setlocale(LC_ALL, 'UTF-8');
-require_once('util.php');
+/***********************************************************************
+* Trikot-Totto Tottomat (Tippspiel für die Fussball EM/WM) 
+* ----------------------------------------------------------------------
+* Datei: util.php
+* 
+* Hilfsdatei für die Anzeige von HTML Elementen. 
+*
+* Email: wyss@superspider.net
+***********************************************************************/
 
-/******************************************************************************
+require_once('util.php');
+/*****************************************************************************
 * function printHeader(..)
 * gibt den HTML Header aus (inkl. Styles) 
 ******************************************************************************/
@@ -50,7 +59,28 @@ function printHeader()
 	<body background="pictures/bg.gif">
 	<?php
 }
-/******************************************************************************
+/****************************************************************************
+* function MessageBox($message)
+ ****************************************************************************/
+function MessageBox($message)
+{
+	print "<script type='text/javascript' language='javascript'>\n";
+	print "<!--\n";
+	print " alert('".$message."');\n";
+	print "//-->\n";
+	print "</script>";  
+}
+/****************************************************************************
+* function DebugMsg($message)
+ ****************************************************************************/
+function DebugMsg($message)
+{
+	global $DEBUG;
+	
+	if ($DEBUG == 1)
+		print $message;  
+}
+/****************************************************************************
  * function PrintGroupMatchHtml($gameNr)
  * 
  * Printet ein Gruppenspiel mitsamt HTML Formatierung.
@@ -70,22 +100,16 @@ function PrintGroupMatchHtml($gameNr)
 		}
 	}
 	
-	$out = "";
-	$out = $out . "<td valign='top'>$team1-$team2</td>";
+	$out = "<td valign='top'>$team1-$team2</td>";
 	$name = "Game" . "$gameNr";
+		
+	$bgcolor = $matches[$gameNr]->matchResBgColor;
+	$content = $matches[$gameNr]->matchRes;
 	
-	if ( (($matches[$gameNr]->matchPts) == 5)||(($matches[$gameNr]->matchPts) == 10))
-		$bgcolor = "lightgreen";
-	else if ((($matches[$gameNr]->matchPts) == 12)||(($matches[$gameNr]->matchPts) == 24))
-		$bgcolor = "green";
-	else
-		$bgcolor = "white";
-	
-	$content = $matches[$gameNr]->matchRes; //$_POST[$name];
 	$out = $out . "<td valign='top'><input STYLE='background: $bgcolor;' size='5' name='$name' type='text' maxlength='50' value='$content'/></td>";
 	print $out;
 }
-/******************************************************************************
+/*****************************************************************************
  * Printet das komplette Finalspiel mitsamt HTML Formatierung. 
   ****************************************************************************/
 function PrintFinalMatch($game)
@@ -93,33 +117,21 @@ function PrintFinalMatch($game)
 	global $mas;
 	global $matches;
 	
-	$bgcolor1 = "lightgray";
-	$bgcolor2 = "lightgray";
-	$bgcolor3 = "white";
+	$team1 = $matches[$game]->team1->name;
+	$team1BgColor = $matches[$game]->team1BgColor;
 	
-	$content1 = $matches[$game]->team1->name;
-	$content2 = $matches[$game]->team2->name;
+	$team2 = $matches[$game]->team2->name;
+	$team2BgColor = $matches[$game]->team2BgColor;
 	
-	if ( ($matches[$game]->team1_hit) == 1 )
-		$bgcolor1 = "green";
-	if ( ($matches[$game]->team2_hit) == 1 )
-		$bgcolor2 = "green";
- 
-	if (($matches[$game]->playPts) == 5)
-		$bgcolor3 = "lightgreen";
-	elseif (($matches[$game]->playPts) == 12)
-		$bgcolor3 = "green";
-	else
-		$bgcolor3 = "white";
+	$matchRes = $matches[$game]->matchRes;
+	$matchResBgColor = $matches[$game]->matchResBgColor;
 	
 	$name = "Game".$game;
 	$nameT1 = "Game".$game."_T1";
 	$nameT2 = "Game".$game."_T2";
 	
-	$result = $matches[$game]->matchRes;
-	
-	print "<td><input readonly='readonly' STYLE='background-color: $bgcolor1;' size='13' name='$nameT1' value='$content1'></td>";
-	print "<td><input readonly='readonly' STYLE='background-color: $bgcolor2;' size='13' name='$nameT2' value='$content2'></td>";
-	print "<td valign='top'><input STYLE='background: $bgcolor3;' size='5' name='$name' type='text' maxlength='50' value='$result'/></td>";
+	print "<td><input readonly='readonly' STYLE='background-color: $team1BgColor;' size='13' name='$nameT1' value='$team1'></td>";
+	print "<td><input readonly='readonly' STYLE='background-color: $team2BgColor;' size='13' name='$nameT2' value='$team2'></td>";
+	print "<td valign='top'><input STYLE='background: $matchResBgColor;' size='5' name='$name' type='text' maxlength='50' value='$matchRes'/></td>";
 }
 ?>

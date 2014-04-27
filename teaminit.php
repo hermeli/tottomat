@@ -1,10 +1,14 @@
 <?php
 setlocale(LC_ALL, 'UTF-8');
 /***********************************************************************
- * teaminint.php 
- *
- * Ititialisiert die Teams und Matches
- **********************************************************************/
+* Trikot-Totto Tottomat (Tippspiel für die Fussball EM/WM) 
+* ----------------------------------------------------------------------
+* Datei: teaminit.php
+* 
+* Initialisierung der Spieltabelle
+*
+* Email: wyss@superspider.net
+***********************************************************************/
 
 require_once('config.php');
 require_once('classes.php');

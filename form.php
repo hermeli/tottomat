@@ -1,24 +1,17 @@
 <?php
 setlocale(LC_ALL, 'UTF-8');
-/***********************************************************************
- * form.php 
- *
- * Hauptdatei für Trikot-Totto PHP Applikation. 
- * 
- * Die Werte aller Formularfelder werden als POST Variablen �bergeben.
- * 
- * Während der Bearbeitung des Formulars kann der Benutzer Aktionen
- * wie z.B. das Berechnen der Achtelfinalteilnehmer ausl�sen. Der 
- * Ablauf dieser Aktionen ist wie folgt definiert:
- * 
- * 1. Teams und Gruppenspiele initialisieren.
- * 2. Spieltipp-Objekte aus POST oder DB Werten erzeugen.
- * 3. Eventuell Finalspiele berechnen.  
- * 4. Alle (inkl. modifizierte) Objektdaten in DB speichern.
- * 5. Alle Formulardaten aus DB laden und darstellen. 
- * Geschrieben von Stefan Wyss (wyss@superspider.net), Januar 2014
- **********************************************************************/
 
+/***********************************************************************
+* Trikot-Totto Tottomat (Tippspiel für die Fussball EM/WM) 
+* ----------------------------------------------------------------------
+* Datei: form.php
+* 
+* Hauptformular für Trikot-Totto PHP Applikation. Diese Seite ist als
+* Startseite zu definieren. Die Werte der Formularfelder werden als
+* POST-Variablen übergeben.  
+* 
+* Email: wyss@superspider.net
+***********************************************************************/
 require_once('config.php');
 require_once('classes.php');
 require_once('view.php'); 
@@ -60,12 +53,13 @@ mysql_select_db($db_name, $db) or die('ERROR!');
 $query = mysql_query("select * from wmtotto2014 where PlayerName = 'Master';") or die(mysql_error());
 $mas = mysql_fetch_array($query);	
 
-// Execute Form Button Handlers
-// require_once('handler.php');
-
+//*****************************************************************************
+// Buttons auswerten (POST-Variablen)
+//***************************************************************************** 
 if (isset($_POST['savetodb']))
 {
 	LoadMatchesFrom("POST");
+	CalculateChampion();
 	SaveMatchesToDB();
 }
 elseif (isset($_POST['calculateeight']))
@@ -105,6 +99,10 @@ else
 CalculatePlayerScore();
 SavePlayerScoreToDB();
 ?>
+
+<!-- ************************************************************************
+//-- Tabelle der Gruppenspiele anzeigen
+//-- ************************************************************************--> 
 <center>
 <form action="<?php $_SESSION['PHP_SELF']?>" method="post">
 
@@ -119,9 +117,10 @@ SavePlayerScoreToDB();
     <col style="width:8%">	
 				
 	<tr bgcolor="#BBBBBB"> 
-		<td colspan=6><div class='heading1'>Tippzettel Trikot-Totto WM 2014 </div><? print "Spieler: $player->username ($player->name), Punkte: $player->score"; ?>
+		<td colspan=4><div class='heading1'>Tippzettel Trikot-Totto WM 2014 </div><? print "Spieler: $player->username ($player->name), Punkte: $player->score"; ?>
 		</td>
 		<td colspan=2><a href='javascript:window.print()'>[Seite drucken]</a></td>
+		<td colspan=2><a href='http://www.trikot-totto.ch'>[Zurück zur Hauptseite]</a></td>
     </tr>
 	<tr>
 		<td colspan=1><input style="width: 75px" name='savetodb' type='submit' value='Speichern' /></td>
@@ -229,6 +228,9 @@ SavePlayerScoreToDB();
 	?>
 </table>
 
+<!-- ************************************************************************
+//-- Tabelle der Finalspiele anzeigen
+//-- ************************************************************************--> 
 <table border="0" cellspacing="0" cellpadding="3">
 	<col style="width:16%">
     <col style="width:16%">

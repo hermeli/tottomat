@@ -1,32 +1,19 @@
 <?php
 setlocale(LC_ALL, 'UTF-8');
 
+/***********************************************************************
+* Trikot-Totto Tottomat (Tippspiel für die Fussball EM/WM) 
+* ----------------------------------------------------------------------
+* Datei: util.php
+* 
+* Auswertungsfunktionen und Berechnungsfunktionen
+*
+* Email: wyss@superspider.net
+***********************************************************************/
+
 require_once('config.php'); 
 require_once('classes.php');
-
-/***********************************************************************
-* function MessageBox($message)
-***********************************************************************/
-function MessageBox($message)
-{
-	print "<script type='text/javascript' language='javascript'>\n";
-	print "<!--\n";
-	print " alert('".$message."');\n";
-	print "//-->\n";
-	print "</script>";  
-}
-/***********************************************************************
-* function DebugMsg($message)
-***********************************************************************/
-function DebugMsg($message)
-{
-	global $DEBUG;
-	
-	if ($DEBUG == 1)
-		print $message;  
-}
-
-/***********************************************************************
+/**********************************************************************
 * function CalculatePlayerScore()
 ***********************************************************************/
 function CalculatePlayerScore()
@@ -37,391 +24,205 @@ function CalculatePlayerScore()
 	global $mas;
 
 	// Alle Spielresultate aus Datenbank lesen
-	$query = mysql_query("select * from wmtotto2014 where PlayerName = '" .$player->username. "';") or die(mysql_error());
-	$usr = mysql_fetch_array($query);	
+	//$query = mysql_query("select * from wmtotto2014 where PlayerName = '" .$player->username. "';") or die(mysql_error());
+	//$usr = mysql_fetch_array($query);	
 
 	$DebugPlayer = "dummy";
-	$PlayerName = $player->username; //$usr['PlayerName'];
+	$PlayerName = $player->username;
 
 	// *****************************************************************
 	// Gruppenspiele
 	// *****************************************************************
 	for ($i=0; $i<48; $i++)
 	{
-		$Game = 'Game'.$i;
-		$GroupMatchPoints = CalculateGroupMatchPoints($mas[$Game],$usr[$Game]);
-		$matches[$i]->playPts = $GroupMatchPoints;
-
-		// Wenn die aktuelle Spielnummer mit der Jokergruppe übereinstimmt: Punkte * 2	
-		if ( (floor($i/6)) == array_search($usr['GroupFavorite'],array("A","B","C","D","E","F","G","H")) )
-		{ 
-			$GroupMatchPoints = $GroupMatchPoints * 2; 
-		}
-		$PlayerScore += $GroupMatchPoints;			
-
-		// Speicher Punkte auch in Matchobjekt
-		$matches[$i]->matchPts = $GroupMatchPoints;
-		
-		//if ($DebugPlayer == $PlayerName)
-			//print "<p>Spieler $PlayerName hat nach Spiel " . $i . "=" . $PlayerScore . " Punkte</p>";
+		$Game = "Game" . $i;
+		$matches[$i]->calculateGroupMatchPoints($mas[$Game],$player->groupFavorite);
 	}
-		
-	if ($DebugPlayer == $PlayerName)
-		print "<p>Spieler $PlayerName hat nach Gruppenspielen $PlayerScore Punkte</p>";
-	
+
 	// *****************************************************************
-	// Achtelfinalspiele - Mannschaftspunkte
+	// Achtelfinalspiele
 	// *****************************************************************
 	// mache eine Liste mit allen Mastergegnern, vergleiche alle 
 	// Usergegner mit der Liste 
 	$start = 48;
 	$end = 55;
 	
-	$TeamList = array();
-	for ($i=$start; $i<=$end; $i++)
-	{
-		$q1 = $mas["Game" . $i . "_T" . '1'];
-		$q2 = $mas["Game" . $i . "_T" . '2'];	
-		if ($q1 != "") array_push($TeamList,$q1);
-		if ($q2 != "") array_push($TeamList,$q2);
-	}
+	$teamList = array();
+	$opponentDictionary = array();
 	
 	for ($i=$start; $i<=$end; $i++)
 	{
-		if (in_array($usr["Game" . $i . "_T" . '1'],$TeamList)) 
-		{ 
-			$PlayerScore += 10;
-			$matches[$i]->matchPts += 10;
-			$matches[$i]->team1_hit = 1;
-		}
-		if (in_array($usr["Game" . $i . "_T" . '2'],$TeamList)) 
-		{ 
-			$PlayerScore += 10;
-			$matches[$i]->matchPts += 10;
-			$matches[$i]->team2_hit = 1;
-		}
-	}
-	if ($DebugPlayer == $PlayerName)
-	{
-		print "<p>Spieler $PlayerName hat nach Achtelfinal - Mannschaftspunkte " . $PlayerScore . " Punkte </p>";	
-	}	
-	
-	// ********************************************************************
-	// Achtelfinalspiele - Partiepunkte
-	// ********************************************************************
-	// Durchlaufe alle Achtelfinals und berechne die Punkte, wenn die zwei 
-	// getippten Gegner in der Korrelation einander gegenüberstehen. 
-	$OpponentList = array();
-
-	// mache eine Liste der Spiele des Masters
-	for ($i=$start; $i<=$end; $i++)
-	{
-		$u1 = $mas["Game" . $i . "_T" . '1'];
-		$u2 = $mas["Game" . $i . "_T" . '2'];
+		$m1 = utf8_encode($mas["Game" . $i . "_T" . '1']);
+		if ($m1 == "") continue;		
 		
-		if ( ($u1!="")&&($u2!="") )
-			array_push($OpponentList,"$u1-$u2");
-	}
-
-	for ($i=$start; $i<=$end; $i++)
-	{
-		$m1 = $usr["Game" . $i . "_T" . '1'];
-		$m2 = $usr["Game" . $i . "_T" . '2'];
-		$uindex = array_search("$m1-$m2",$OpponentList);
-		if (is_numeric($uindex))
-		{		
-			$j = $uindex + $start;
-			$tmp = CalculateFinalMatchPoints($usr["Game".$i],$mas["Game".$j],"NORMAL");
-			$matches[$i]->playPts = $tmp;
-			$PlayerScore += $tmp;
-			$matches[$i]->matchPts += $tmp;	
-		} 
-		else
-		{
-			$mindex = array_search("$m2-$m1",$OpponentList);
-			if (is_numeric($mindex))
-			{
-				$j = $mindex + $start;
-				$tmp = CalculateFinalMatchPoints($usr["Game".$i],$mas["Game".$j],"REVERSE");
-				$matches[$i]->playPts = $tmp;
-				$PlayerScore += $tmp;
-				$matches[$i]->matchPts += $tmp;
-			}
-		}
+		$m2 = utf8_encode($mas["Game" . $i . "_T" . '2']);
+		if ($m2 == "") continue;
+		
+		$mRes = $mas["Game" . $i];	
+		if ($m2 == "") continue;
+		
+		array_push($teamList,$m1);
+		array_push($teamList,$m2);
+		$opponentDictionary["$m1-$m2"] = $mRes;
+		$opponentDictionary["$m2-$m1"] = strrev($mRes);  // cross correlation games
 	}
 	
-	if ($DebugPlayer == $PlayerName)
-		print "<p>Spieler $PlayerName hat nach Achtelfinal - Partiepunkte " . $PlayerScore . " Punkte </p>";
+	for ($i=$start; $i<=$end; $i++)
+		$matches[$i]->calculateFinalMatchPoints($teamList,$opponentDictionary);
 
 	// *****************************************************************
-	// Viertelfinalspiele - Mannschaftspunkte
+	// Viertelfinalspiele
 	// *****************************************************************
 	// mache eine Liste mit allen Viertelfinalgegnern, vergleiche alle Masterfelder mit der Liste 
 	$start = 56;
 	$end = 59;
 	
-	$TeamList = array();
-	for ($i=$start; $i<=$end; $i++)
-	{
-		$q1 = $mas["Game" . $i . "_T" . '1'];
-		$q2 = $mas["Game" . $i . "_T" . '2'];	
-		if ($q1 != "") array_push($TeamList,$q1);
-		if ($q2 != "") array_push($TeamList,$q2);
-	}
+	$teamList = array();
+	$opponentDictionary = array();
 	
 	for ($i=$start; $i<=$end; $i++)
 	{
-		if (in_array($usr["Game" . $i . "_T" . '1'],$TeamList))
-		{ 
-			$PlayerScore += 10;
-			$matches[$i]->matchPts += 10;
-			$matches[$i]->team1_hit = 1;
-		}
-		if (in_array($usr["Game" . $i . "_T" . '2'],$TeamList)) 
-		{ 
-			$PlayerScore += 10;
-			$matches[$i]->matchPts += 10;
-			$matches[$i]->team2_hit = 1;
-		}
-	}
-	if ($DebugPlayer == $PlayerName)
-	{
-		print "<p>Spieler $PlayerName hat nach Viertelfinal - Mannschaftspunkte " . $PlayerScore . " Punkte </p>";	
-	}	
-	
-	// ********************************************************************
-	// Viertelfinalspiele - Partiepunkte
-	// ********************************************************************
-	// Durchlaufe alleViertel und berechne die Punkte, wenn die zwei getippten 
-	// Gegner in der Korrelation einander gegenüberstehen. 
-	$OpponentList = array();
-
-	// mache eine Liste der Spiele des Teilnehmers
-	for ($i=$start; $i<=$end; $i++)
-	{
-		$u1 = $mas["Game" . $i . "_T" . '1'];
-		$u2 = $mas["Game" . $i . "_T" . '2'];
+		$m1 = utf8_encode($mas["Game" . $i . "_T" . '1']);
+		if ($m1 == "") continue;		
 		
-		if ( ($u1!="")&&($u2!="") )
-			array_push($OpponentList,"$u1-$u2");
+		$m2 = utf8_encode($mas["Game" . $i . "_T" . '2']);
+		if ($m2 == "") continue;
+		
+		$mRes = $mas["Game" . $i];	
+		if ($m2 == "") continue;
+		
+		array_push($teamList,$m1);
+		array_push($teamList,$m2);
+		$opponentDictionary["$m1-$m2"] = $mRes;
+		$opponentDictionary["$m2-$m1"] = strrev($mRes);  // cross correlation games
 	}
-
+	
 	for ($i=$start; $i<=$end; $i++)
-	{
-		$m1 = $usr["Game" . $i . "_T" . '1'];
-		$m2 = $usr["Game" . $i . "_T" . '2'];
-		$uindex = array_search("$m1-$m2",$OpponentList);
-		if (is_numeric($uindex))
-		{		
-			$j = $uindex + $start;
-			$tmp = CalculateFinalMatchPoints($usr["Game".$i],$mas["Game".$j],"NORMAL");	
-			$matches[$i]->playPts = $tmp;
-			$PlayerScore += $tmp;
-			$matches[$i]->matchPts += $tmp;
-		} 
-		/*
-		else
-		{
-			$uindex = array_search("$m2-$m1",$OpponentList);
-			if (is_numeric($uindex))
-			{
-				$j = $uindex + $start;
-				$tmp = CalculateFinalMatchPoints($usr["Game".$i],$mas["Game".$j],"REVERSE");
-				//$matches[$i]->playPts = $tmp;
-				$PlayerScore += $tmp;
-				$matches[$i]->matchPts += $tmp;	
-			}
-		}
-		*/
-	}
+		$matches[$i]->calculateFinalMatchPoints($teamList,$opponentDictionary);
 	
-	if ($DebugPlayer == $PlayerName)
-		print "<p>Spieler $PlayerName hat nach Viertelfinal - Partiepunkte " . $PlayerScore . " Punkte </p>";
-	
-
 	// ********************************************************************
-	// Halbfinalspiele - Mannschaftspunkte
+	// Halbfinalspiele
 	// ********************************************************************
 	// mache eine Liste mit allen Halbfinalgegnern, vergleiche alle Masterfelder mit der Liste 
-	
-	$TeamList = array();
 	$start = 60;
 	$end = 61;
 	
-	for ($i=$start; $i<=$end; $i++)
-	{
-		$q1 = $mas["Game" . $i . "_T" . '1'];
-		$q2 = $mas["Game" . $i . "_T" . '2'];	
-		if ($q1 != "") array_push($TeamList,$q1);
-		if ($q2 != "") array_push($TeamList,$q2);
-	}
+	$teamList = array();
+	$opponentDictionary = array();
 	
 	for ($i=$start; $i<=$end; $i++)
 	{
-		if (in_array($usr["Game" . $i . "_T" . '1'],$TeamList)) 
-		{ 
-			$PlayerScore += 10;
-			$matches[$i]->matchPts += 10;
-			$matches[$i]->team1_hit = 1;
-		}
-		if (in_array($usr["Game" . $i . "_T" . '2'],$TeamList)) 
-		{ 
-			$PlayerScore += 10;
-			$matches[$i]->matchPts += 10;
-			$matches[$i]->team2_hit = 1;
-		}
-	}
-	if ($DebugPlayer == $PlayerName)		
-		print "<p>Spieler $PlayerName hat nach Halbfinal - Mannschaftspunkte " . $PlayerScore . " Punkte </p>";	
-
-	// ********************************************************************
-	// Halbfinalspiele - Partiepunkte
-	// ********************************************************************
-	// Durchlaufe alle Halbfinalspiele und berechne die Punkte, wenn die zwei 
-	// getippten Gegner einander direkt gegenüberstehen. 
-	$OpponentList = array();
+		$m1 = utf8_encode($mas["Game" . $i . "_T" . '1']);
+		if ($m1 == "") continue;		
 		
-	// mache eine Liste der Gegner des Teilnehmers
-	for ($i=$start; $i<=$end; $i++)
-	{
-		$u1 = $mas["Game" . $i . "_T" . '1'];
-		$u2 = $mas["Game" . $i . "_T" . '2'];
-		if ( ($u1!="")&&($u2!="") )
-			array_push($OpponentList,"$u1-$u2");
-	}
-
-	for ($i=$start; $i<=$end; $i++)
-	{
-		$m1 = $usr["Game" . $i . "_T" . '1'];
-		$m2 = $usr["Game" . $i . "_T" . '2'];
-		$uindex = array_search("$m1-$m2",$OpponentList);
-		if (is_numeric($uindex))
-		{		
-			$j = $uindex + $start;
-			$tmp = CalculateFinalMatchPoints($usr["Game".$i],$mas["Game".$j],"NORMAL");	
-			$matches[$i]->playPts = $tmp;
-			$PlayerScore += $tmp;
-			$matches[$i]->matchPts += $tmp;
-		} 
+		$m2 = utf8_encode($mas["Game" . $i . "_T" . '2']);
+		if ($m2 == "") continue;
+		
+		$mRes = $mas["Game" . $i];	
+		if ($m2 == "") continue;
+		
+		array_push($teamList,$m1);
+		array_push($teamList,$m2);
+		$opponentDictionary["$m1-$m2"] = $mRes;
+		$opponentDictionary["$m2-$m1"] = strrev($mRes);  // cross correlation games
 	}
 	
-	if ($DebugPlayer == $PlayerName)
-		print "<p>Spieler $PlayerName hat nach Halbfinal - Partiepunkte " . $PlayerScore . " Punkte </p>";
-	
+	for ($i=$start; $i<=$end; $i++)
+		$matches[$i]->calculateFinalMatchPoints($teamList,$opponentDictionary);
 		
 	// ********************************************************************
-	// Finalspiele - Mannschaftspunkte
-	// ********************************************************************
-	// mache eine Liste mit allen Finalgegnern, vergleiche alle Masterfelder mit der Liste 
-	
-	$TeamList = array();
+	// Spiel um Platz 3
+	// ******************************************************************** 
 	$start = 62;
+	$end = 62;
+	
+	$teamList = array();
+	$opponentDictionary = array();
+	
+	for ($i=$start; $i<=$end; $i++)
+	{
+		$m1 = utf8_encode($mas["Game" . $i . "_T" . '1']);
+		if ($m1 == "") continue;		
+		
+		$m2 = utf8_encode($mas["Game" . $i . "_T" . '2']);
+		if ($m2 == "") continue;
+		
+		$mRes = $mas["Game" . $i];	
+		if ($m2 == "") continue;
+		
+		array_push($teamList,$m1);
+		array_push($teamList,$m2);
+		$opponentDictionary["$m1-$m2"] = $mRes;
+		$opponentDictionary["$m2-$m1"] = strrev($mRes);  // cross correlation games
+	}
+	
+	for ($i=$start; $i<=$end; $i++)
+		$matches[$i]->calculateFinalMatchPoints($teamList,$opponentDictionary);
+	
+	// ********************************************************************
+	// Final
+	// ********************************************************************
+	$start = 63;
 	$end = 63;
 	
-	for ($i=$start; $i<=$end; $i++)
-	{
-		$q1 = $mas["Game" . $i . "_T" . '1'];
-		$q2 = $mas["Game" . $i . "_T" . '2'];	
-		if ($q1 != "") array_push($TeamList,$q1);
-		if ($q2 != "") array_push($TeamList,$q2);
-	}
+	$teamList = array();
+	$opponentDictionary = array();
 	
 	for ($i=$start; $i<=$end; $i++)
 	{
-		if (in_array($usr["Game" . $i . "_T" . '1'],$TeamList)) 
-		{ 
-			$PlayerScore += 10;
-			$matches[$i]->matchPts += 10;
-			$matches[$i]->team1_hit = 1;
-		}
-		if (in_array($usr["Game" . $i . "_T" . '2'],$TeamList)) 
-		{ 
-			$PlayerScore += 10;
-			$matches[$i]->matchPts += 10;
-			$matches[$i]->team2_hit = 1;
-		}
-	}
-	if ($DebugPlayer == $PlayerName)		
-		print "<p>Spieler $PlayerName hat nach Final - Mannschaftspunkte " . $PlayerScore . " Punkte </p>";	
-
-	// ********************************************************************
-	// Finalspiele - Partiepunkte
-	// ********************************************************************
-	// Durchlaufe alle Finalspiele und berechne die Punkte, wenn die zwei 
-	// getippten Gegner einander direkt gegenüberstehen. 
-	$OpponentList = array();
+		$m1 = utf8_encode($mas["Game" . $i . "_T" . '1']);
+		if ($m1 == "") continue;		
 		
-	// mache eine Liste der Gegner des Teilnehmers
-	for ($i=$start; $i<=$end; $i++)
-	{
-		$u1 = $mas["Game" . $i . "_T" . '1'];
-		$u2 = $mas["Game" . $i . "_T" . '2'];
-		if ( ($u1!="")&&($u2!="") )
-			array_push($OpponentList,"$u1-$u2");
-	}
-
-	for ($i=$start; $i<=$end; $i++)
-	{
-		$m1 = $usr["Game" . $i . "_T" . '1'];
-		$m2 = $usr["Game" . $i . "_T" . '2'];
-		$uindex = array_search("$m1-$m2",$OpponentList);
-		if (is_numeric($uindex))
-		{		
-			$j = $uindex + $start;
-			$tmp = CalculateFinalMatchPoints($usr["Game".$i],$mas["Game".$j],"NORMAL");
-			$matches[$i]->playPts = $tmp;
-			$PlayerScore += $tmp;
-			$matches[$i]->matchPts += $tmp;	
-		} 
+		$m2 = utf8_encode($mas["Game" . $i . "_T" . '2']);
+		if ($m2 == "") continue;
+		
+		$mRes = $mas["Game" . $i];	
+		if ($m2 == "") continue;
+		
+		array_push($teamList,$m1);
+		array_push($teamList,$m2);
+		$opponentDictionary["$m1-$m2"] = $mRes;
+		$opponentDictionary["$m2-$m1"] = strrev($mRes);  // cross correlation games
 	}
 	
-	if ($DebugPlayer == $PlayerName)
-		print "<p>Spieler $PlayerName hat nach Final - Partiepunkte " . $PlayerScore . " Punkte </p>";
-	
+	for ($i=$start; $i<=$end; $i++)
+		$matches[$i]->calculateFinalMatchPoints($teamList,$opponentDictionary);
+		
 	// ********************************************************************
-	// Finalspiele - Finalpunkte
+	// Finalspiele - Bonuspunkte
 	// ********************************************************************
 
-	if (	CheckGame($mas["Game62"]) &&	
-			(GetLooser($mas["Game62_T1"], $mas["Game62_T2"], $mas["Game62"]) 
-			== 	GetLooser($usr["Game62_T1"], $usr["Game62_T2"], $usr["Game62"])) )
+	$master_match62 = NEW match(62,"FF",GetTeam(utf8_encode($mas["Game62_T1"])),GetTeam(utf8_encode($mas["Game62_T2"])));
+	$master_match62->matchRes = $mas["Game62"];
+	
+	$master_match63 = NEW match(63,"FF",GetTeam(utf8_encode($mas["Game63_T1"])),GetTeam(utf8_encode($mas["Game63_T2"])));
+	$master_match63->matchRes = $mas["Game63"];
+	
+	if ( checkGame($mas["Game62"]) && checkGame($matches[62]->matchRes) )
 	{
-		$matches[62]->matchPts += 20;
-		$PlayerScore += 20;	
+		if ( GetLooser($matches[62]) == GetLooser($master_match62) )
+			$matches[62]->matchResPts += 20;
+	
+		if ( GetWinner($matches[62]) == GetWinner($master_match62) )
+			$matches[62]->matchResPts += 30;
+	}
+	if ( checkGame($mas["Game63"]) && checkGame($matches[63]->matchRes) )
+	{	
+		if ( GetLooser($matches[63]) == GetLooser($master_match63) )
+			$matches[63]->matchResPts += 40;
+	
+		if ( GetWinner($matches[63]) == GetWinner($master_match63) )
+			$matches[63]->matchResPts += 70;	
 	}
 	
-	if (	CheckGame($mas["Game62"]) &&	
-			(GetWinner($mas["Game62_T1"], $mas["Game62_T2"], $mas["Game62"]) 
-			== 	GetWinner($usr["Game62_T1"], $usr["Game62_T2"], $usr["Game62"])) )
+	$player->score = 0;
+	foreach ($matches as $match)
 	{
-		$matches[62]->matchPts += 30;
-		$PlayerScore += 30;	
+		$player->score += $match->calculateMatchTotalPoints();
+		if ($DebugPlayer == $PlayerName)
+			print "MatchNr: ".$match->matchNr." team1Pts:".$match->team1Pts." team2Pts:".$match->team2Pts." matchResPts:".$match->matchResPts." matchTotalPts:".$match->matchTotalPts."<br>";
 	}
-	if (	CheckGame($mas["Game63"]) &&	
-			(GetLooser($mas["Game63_T1"], $mas["Game63_T2"], $mas["Game63"]) 
-			== 	GetLooser($usr["Game63_T1"], $usr["Game63_T2"], $usr["Game63"])) )
-	{
-		$matches[63]->matchPts += 40;
-		$PlayerScore += 40;	
-	}
-	if (	CheckGame($mas["Game63"]) &&	
-			(GetWinner($mas["Game63_T1"], $mas["Game63_T2"], $mas["Game63"]) 
-			== 	GetWinner($usr["Game63_T1"], $usr["Game63_T2"], $usr["Game63"])) )
-	{
-		$matches[63]->matchPts += 70;
-		$PlayerScore += 70;	
-	}
-		
-	if ($DebugPlayer == $PlayerName)		
-		print "<p>Spieler $PlayerName hat nach Final - Finalpunkte " . $PlayerScore . " Punkte </p>";
-		
-	$PlayerList["$Name"] = $PlayerScore;
-	
-	if ($DebugPlayer == $PlayerName)
-		foreach ($matches as $key)
-			print "MatchNr: ".$key->matchNr." hit1:".$key->team1_hit." hit2:".$key->team2_hit." matchPts:".$key->matchPts." playPts:".$key->playPts."<br>";
-
-	$player->score = $PlayerScore;
+	$PlayerList["$Name"] = $player->score;
 }
 
 /***********************************************************************
@@ -498,7 +299,7 @@ function CalculateLastSixteenFinals()
 	$matches[50]->matchRes = "";
 	$matches[51]->team1 = GetTeamWithRank("D",1);
 	$matches[51]->team2 = GetTeamWithRank("C",2);
-	$matches[52]->matchRes = "";
+	$matches[51]->matchRes = "";
 	$matches[52]->team1 = GetTeamWithRank("E",1);
 	$matches[52]->team2 = GetTeamWithRank("F",2);
 	$matches[52]->matchRes = "";
@@ -676,7 +477,7 @@ function CalculateChampion()
 		$team2 = $matches[$i]->team2->name;
 		if ( ($team1=="")||($team2=="")||($team1==$team2) )
 		{
-			MessageBox("Bitte zuerst Finalgegner berechnen!");
+			// Info: Das fehlerhafte Eingabefeld wird später angezeigt.
 			return;
 		}
 	}
@@ -685,7 +486,7 @@ function CalculateChampion()
 	$errGame = checkAllGames();
 	if ( ($errGame < 65)&&($errGame != -1) )
 	{
-		MessageBox("Eingabefehler bei Spiel $errGame!");
+		// Info: Das fehlerhafte Eingabefeld wird später angezeigt.
 		$player->champion = "";
 		return;
 	}
@@ -1020,86 +821,6 @@ function checkEvenFinal($game)
 	else
 		return 1;
 }
-
-/***********************************************************************
-* function CalculateGroupMatchPoints(..)
-* Berechnet die Spielpunkte eines Gruppenspiels anhand des Spielresultats 
-***********************************************************************/
-function CalculateGroupMatchPoints($marg,$uarg)
-{
-	//print "+CalculateGroupMatchPoints: marg=$marg, uarg=$uarg";
-	
-	if (!checkGame($marg)) return 0;
-	if (!checkGame($uarg)) return 0;
-
-	if ($marg == $uarg) return 12;
-	
-	$mparts = explode(":", $marg);
-	$uparts = explode(":", $uarg);	
-	
-	if ( ($mparts[0] > $mparts[1]) && ($uparts[0] > $uparts[1]) ){
-		return 5;
-	} elseif ( ($mparts[0] == $mparts[1]) && ($uparts[0] == $uparts[1]) ){
-		return 5;
-	} else if ( ($mparts[0] < $mparts[1]) && ($uparts[0] < $uparts[1]) ){
-		return 5;
-	} else {
-		return 0;
-	}
-}
-
-/***********************************************************************
-* function CalculateFinalMatchPoints(..)
-* Berechnet die Spielpunkte eines Finals anhand des Spielresultats und 
-* der Finalgegner.
-***********************************************************************/
-function CalculateFinalMatchPoints($marg,$uarg,$mode)
-{
-	//print "+CalculateFinalMatchPoints $marg,$uarg";
-	
-	if ( $marg == "-" ) return 0;	// Achtung: auf == "" checken funktioniert nicht!
-	if ( $uarg == "-" ) die("Interner Programmfehler. Bitte Spielleitung kontaktieren!");
-	
-	$mparts = explode(":", $marg);
-	$uparts = explode(":", $uarg);
-	
-	if ($mode == "REVERSE")
-	{
-		$tmp0 = $uparts[0];
-		$tmp1 = $uparts[1];
-		$uparts[0] = "$tmp1";
-		$uparts[1] = "$tmp0";
-	}
-	
-	if ( ($mparts[0] == $uparts[0]) && ($mparts[1] == $uparts[1]) ) return 12;
-	
-	if ( ($mparts[0] > $mparts[1]) && ($uparts[0] > $uparts[1]) ){
-		return 5;
-	} elseif ( ($mparts[0] == $mparts[1]) && ($uparts[0] == $uparts[1]) ){
-		return 5;
-	} else if ( ($mparts[0] < $mparts[1]) && ($uparts[0] < $uparts[1]) ){
-		return 5;
-	} else {
-		return 0;
-	}
-}
-
-/***********************************************************************
-* GetWinnerOrEqual(...)
-* Gibt den Spielgewinner oder "equal" zurück
-***********************************************************************/
-function GetWinnerOrEqual($T1,$T2,$Score)
-{
-	$ScoreParts = explode(":", $Score);
-	
-	if ($ScoreParts[0] > $ScoreParts[1])
-		return $T1;
-	else if ($ScoreParts[0] < $ScoreParts[1])
-		return $T2;
-	else
-		return 99;
-}	
-
 /***********************************************************************
 * GetWinner(...)
 * Gibt den Spielgewinner zurück
@@ -1126,5 +847,4 @@ function GetLooser($match)
 	else
 		return $match->team2;
 }
-
 ?>
