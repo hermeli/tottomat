@@ -14,7 +14,7 @@
 ***********************************************************************/
 $db_serv = 'superspi.mysql.db.hostpoint.ch';
 $db_name = 'superspi_tottomat';
-$db_user = 'superspi_master';
+$db_user = 'XXXXXXXXXXXX';
 $db_pass = 'XXXXXXXXXXXX';
 $db_table = 'wmtotto2014';
 
