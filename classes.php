@@ -19,6 +19,8 @@ class player
 	var $totalGoals;
 	var $name;
 	var $username;
+	var $email;
+	var $registerDate;
 	var $champion;
 	var $score;
 }

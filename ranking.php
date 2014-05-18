@@ -1,6 +1,7 @@
 <?php
+setlocale(LC_ALL, 'UTF-8');
 /***********************************************************************
-* Trikot-Totto Tottomat (Tippspiel für die Fussball EM/WM) 
+* Trikot-Totto Tottomat (Tippspiel f√ºr die Fussball EM/WM) 
 * ----------------------------------------------------------------------
 * Datei: ranking.php
 * 
@@ -33,7 +34,7 @@ if ($username == "") die ('Der Benutzer ist nicht angemeldet!');
 //*****************************************************************************
 // Berechnung der Punkte aller Spieler
 //***************************************************************************** 
-// Verbindung zum MySQL Server herstellen und Datenbank wählen
+// Verbindung zum MySQL Server herstellen und Datenbank w√§hlen
 $db=mysql_connect($db_serv, $db_user, $db_pass) or die ('I cannot connect to the database because: ' . mysql_error()); 
 mysql_select_db($db_name, $db) or die('ERROR!');
 
@@ -64,11 +65,11 @@ do
 	$player->score = 0;
 	$player->username = $qresult['PlayerName'];
 	
-	// Lade die Spielresultate aus der DB und berechne Punkte für diesen Spieler
+	// Lade die Spielresultate aus der DB und berechne Punkte f√ºr diesen Spieler
 	LoadMatchesFrom("DB");
 	CalculatePlayerScore();
 	
-	// Speichere Punkte für diesen Spieler in der Datenbank
+	// Speichere Punkte f√ºr diesen Spieler in der Datenbank
 	SavePlayerScoreToDB();
 	
 	$Name = $player->username;
@@ -83,9 +84,8 @@ mysql_close($db);
 print "<form action='form.php' method='post'>";
 print "<table align='center' width='800px' border='0' cellspacing='0' cellpadding='1'>";
 
-//print "<input type='button' value='zur¸ck' onClick='history.go(-1);'>";
-//print "<a href='#' onClick='history.go(-1);'>Back</a>";
-print "<tr bgcolor='#BBBBBB'> <td><b>Rang</b></td><td>Name</td><td>Punkte</td></tr>";
+print "<tr><td colspan=2></td><td align=right><a href='http://www.trikot-totto.ch'>[Zur√ºck zur Hauptseite]</a></td></tr>";
+print "<tr bgcolor='gold'> <td><b>Rang</b></td><td>Name</td><td>Punkte</td></tr>";
 
 $bg = 0;
 $color[0] = "#DDDDDD";

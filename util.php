@@ -561,7 +561,7 @@ function SaveMatchesToDB()
 	if ($dbresult[0] == 0) 
 	{
 		// Erzeuge neuen Datenbankeintrag für Spieler		
-		$sql = "INSERT INTO wmtotto2014 (FormComplete,Score,Name,PlayerName,Champion,GroupFavorite,TotalGoals";
+		$sql = "INSERT INTO wmtotto2014 (FormComplete,Email,RegisterDate,Score,Name,PlayerName,Champion,GroupFavorite,TotalGoals";
 		
 		for ($i=0; $i<64; $i++)			
 			$sql = $sql . ", Game$i";
@@ -571,6 +571,8 @@ function SaveMatchesToDB()
 		
 		$formComplete = 0;	
 		$sql = $sql . ") values ('" . $formComplete . "'," .
+								"'" . $player->email . "'," .
+								"'" . $player->registerDate . "'," .
 								"'" . $player->score . "'," .
 								"'" . $player->name . "'," .
 								"'" . $player->username . "'," .
@@ -595,6 +597,8 @@ function SaveMatchesToDB()
 		// Update des bestehenden Datenbankeintrags für Spieler (Score wird später nachgeführt!)
 		$formComplete = isFormComplete();	
 		$sql = "UPDATE wmtotto2014 SET FormComplete='" . $formComplete . "'," .
+							"Email='" . $player->email . "'," .
+							"RegisterDate='" . $player->registerDate . "'," .
 							"Name='" . $player->name . "'," .
 							"Champion='" . $player->champion . "',".
 							"GroupFavorite='" . $player->groupFavorite . "',".
@@ -679,6 +683,36 @@ function LoadMatchesFrom($source)
 }
 
 /***********************************************************************
+* function GetBetterTeam($teamA, $teamB)
+* Gibt das Team mit der besseren Punktetabelle zurück.
+***********************************************************************/
+function GetBetterTeam($teamA, $teamB)
+{
+	if ($teamA->score > $teamB->score)
+	{
+		return $teamA;
+	}
+	elseif ($teamA->score == $teamB->score)
+	{
+		// same score, check diffgoals
+		if ($teamA->diffgoals > $teamB->diffgoals)
+		{
+			return $teamA;
+		}
+		elseif ($teamA->diffgoals == $teamB->diffgoals)
+		{
+			// same diffgoals, check goals
+			if ($teamA->goals > $teamB->goals)
+			{
+				return $teamA;
+			}
+			return $teamB;
+		}
+		return $teamB;
+	}
+	return $teamB;
+}
+/***********************************************************************
 * function GetTeamWithRank($group, $rank)
 * Gibt das Team einer Gruppe mit dem angegebenen Rang (1. oder 2.) zurück.
 ***********************************************************************/
@@ -692,21 +726,28 @@ function GetTeamWithRank($group,$rank)
 	foreach ($teams as $team)
 	{
 		if ($team->group == $group)
-		{
-			if ($team->score >= $first->score)
+		{			
+			// check if better than second
+			$tmp = GetBetterTeam($team,$second);
+			
+			if ($tmp->name == $team->name)
 			{
-				if ($team->diffgoals >= $first->diffgoals)
-					if ($team->goals >= $first->goals)
-					{	
-						$second = clone $first;
-						$first = clone $team;
-					}
+				// check if better than first
+				$tmp = GetBetterTeam($team,$first);
+				if ($tmp->name == $team->name)
+				{
+					// better than first
+					$second = clone $first;
+					$first = clone $team;
+				}
+				else
+				{
+					// worse than first
+					$second = clone $team;
+				}
 			}
-			elseif ($team->score >= $second->score)
-				$second = clone $team;
 		}
 	}
-
 	//print "Group $group first " . $first->name . " second " . $second->name . "</br>";
 
 	if ($rank == 1)

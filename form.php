@@ -40,8 +40,11 @@ require_once ( JPATH_BASE .DS.'includes'.DS.'defines.php' );
 require_once ( JPATH_BASE .DS.'includes'.DS.'framework.php' );
 JFactory::getApplication('site')->initialise();
 $user =& JFactory::getUser();
+//print_r($user);
 $player->username = $user->username;
 $player->name = $user->name;
+$player->email = $user->email;
+$player->registerDate = $user->registerDate;
 
 if ($player->username == "") die ('Der Benutzer ist nicht angemeldet!');
 
@@ -179,8 +182,11 @@ SavePlayerScoreToDB();
 		<td colspan=1 valign="top"><input size="5" name="TotalGoals" type="text" maxlength="5" value="<? print $player->totalGoals; ?>" /></td>
 		<td colspan=6>(inkl. Verlaengerungen und Elfmeterschiessen)</td>
 	</tr>
-	<tr bgcolor="yellow">
-		<td align="center" bgcolor="#DDAACC" colspan=8>Spielresultate mit Doppelpunkt eingeben (z.B. <b>3:4</b>). Jokergruppe = Punkte verdoppeln!</td>
+	<tr bgcolor="#DDAACC">
+		<td align="center" colspan=8><b>ACHTUNG:</b> Bis WM-Beginn am 12. Juni 2014 muss <b>DIE GESAMTE WM</b> bis und mit Weltmeister von dir getippt sein! </td>
+	</tr>
+	<tr bgcolor="#DDAACC">
+		<td align="center" colspan=8>Spielresultate mit Doppelpunkt eingeben (z.B. <b>3:4</b>). Jokergruppe = Punkte verdoppeln!</td>
 	</tr>
 	<!-- ************ GRUPPEN A-D ********************************* -->
 	<tr bgcolor="gold">
