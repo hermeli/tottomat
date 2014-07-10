@@ -49,6 +49,7 @@ $mas = mysql_fetch_array($queryMaster);
 
 // Laden der Matches aller User
 $queryList = mysql_query("select * from wmtotto2014 where PlayerName != 'master';") or die(mysql_error());		
+$PlayerTable = array();
 do
 {
 	$qresult = mysql_fetch_array($queryList);
@@ -64,6 +65,7 @@ do
 	$player = NEW player();
 	$player->score = 0;
 	$player->username = $qresult['PlayerName'];
+	$player->name = $qresult['Name'];
 	
 	// Lade die Spielresultate aus der DB und berechne Punkte für diesen Spieler
 	LoadMatchesFrom("DB");
@@ -72,8 +74,8 @@ do
 	// Speichere Punkte für diesen Spieler in der Datenbank
 	SavePlayerScoreToDB();
 	
-	$Name = $player->username;
-	$PlayerList["$Name"] = $player->score;
+	$PlayerTable[] = $player;	
+	$PlayerList[$player->name] = $player->score;
 }
 while ( !empty($qresult) );
 mysql_close($db);
@@ -85,7 +87,7 @@ print "<form action='form.php' method='post'>";
 print "<table align='center' width='800px' border='0' cellspacing='0' cellpadding='1'>";
 
 print "<tr><td colspan=2></td><td align=right><a href='http://www.trikot-totto.ch'>[Zurück zur Hauptseite]</a></td></tr>";
-print "<tr bgcolor='gold'> <td><b>Rang</b></td><td>Name</td><td>Punkte</td></tr>";
+print "<tr bgcolor='gold'> <td><b>Rang</b></td><td><b>Name</b></td><td><b>Punkte</b></td></tr>";
 
 $bg = 0;
 $color[0] = "#DDDDDD";
@@ -94,11 +96,11 @@ $color[1] = "#CCCCCC";
 $rank = 1;
 $ctr = 1;
 arsort($PlayerList);
-$old_value = 0;
+$old_score = 0;
 
-foreach ($PlayerList as $key => $value) {		
+foreach ($PlayerList as $key => $score) {		
 	
-	if ($old_value != $value) {
+	if ($old_score != $score) {
 		$rank = $ctr++;
 		if ($bg == 0){
 			$bg = 1;
@@ -110,11 +112,17 @@ foreach ($PlayerList as $key => $value) {
 	{
 		$ctr++;
 	}
-	if ($key == $username )
-		print "<tr bgcolor='lightgreen'><td>$rank</td><td>$key</td><td>$value</td></tr>";
+	
+	foreach ($PlayerTable as $TmpPlayer)
+		if ($key == $TmpPlayer->name)
+			$uname = $TmpPlayer->username;
+	
+	if ($key == $user->name )
+		print "<tr bgcolor='lightgreen'><td>$rank</td><td>$key ($uname)</td><td>$score</td></tr>";
 	else
-		print "<tr bgcolor=$color[$bg]><td>$rank</td><td>$key</td><td>$value</td></tr>";
-	$old_value = $value;
+		print "<tr bgcolor=$color[$bg]><td>$rank</td><td>$key ($uname)</td><td>$score</td></tr>";
+	$old_score = $score;
 }
+
 print "</table></form>";
 ?>		

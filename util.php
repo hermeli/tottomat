@@ -53,13 +53,13 @@ function CalculatePlayerScore()
 	for ($i=$start; $i<=$end; $i++)
 	{
 		$m1 = utf8_encode($mas["Game" . $i . "_T" . '1']);
-		if ($m1 == "") continue;		
+		// if ($m1 == "") continue;		
 		
 		$m2 = utf8_encode($mas["Game" . $i . "_T" . '2']);
-		if ($m2 == "") continue;
+		// if ($m2 == "") continue;
 		
 		$mRes = $mas["Game" . $i];	
-		if ($m2 == "") continue;
+		// if ($m2 == "") continue;
 		
 		array_push($teamList,$m1);
 		array_push($teamList,$m2);
@@ -83,13 +83,13 @@ function CalculatePlayerScore()
 	for ($i=$start; $i<=$end; $i++)
 	{
 		$m1 = utf8_encode($mas["Game" . $i . "_T" . '1']);
-		if ($m1 == "") continue;		
+		// if ($m1 == "") continue;		
 		
 		$m2 = utf8_encode($mas["Game" . $i . "_T" . '2']);
-		if ($m2 == "") continue;
+		// if ($m2 == "") continue;
 		
 		$mRes = $mas["Game" . $i];	
-		if ($m2 == "") continue;
+		// if ($m2 == "") continue;
 		
 		array_push($teamList,$m1);
 		array_push($teamList,$m2);
@@ -113,13 +113,13 @@ function CalculatePlayerScore()
 	for ($i=$start; $i<=$end; $i++)
 	{
 		$m1 = utf8_encode($mas["Game" . $i . "_T" . '1']);
-		if ($m1 == "") continue;		
+		// if ($m1 == "") continue;		
 		
 		$m2 = utf8_encode($mas["Game" . $i . "_T" . '2']);
-		if ($m2 == "") continue;
+		// if ($m2 == "") continue;
 		
 		$mRes = $mas["Game" . $i];	
-		if ($m2 == "") continue;
+		// if ($m2 == "") continue;
 		
 		array_push($teamList,$m1);
 		array_push($teamList,$m2);
@@ -142,13 +142,13 @@ function CalculatePlayerScore()
 	for ($i=$start; $i<=$end; $i++)
 	{
 		$m1 = utf8_encode($mas["Game" . $i . "_T" . '1']);
-		if ($m1 == "") continue;		
+		// if ($m1 == "") continue;		
 		
 		$m2 = utf8_encode($mas["Game" . $i . "_T" . '2']);
-		if ($m2 == "") continue;
+		// if ($m2 == "") continue;
 		
 		$mRes = $mas["Game" . $i];	
-		if ($m2 == "") continue;
+		// if ($m2 == "") continue;
 		
 		array_push($teamList,$m1);
 		array_push($teamList,$m2);
@@ -171,13 +171,13 @@ function CalculatePlayerScore()
 	for ($i=$start; $i<=$end; $i++)
 	{
 		$m1 = utf8_encode($mas["Game" . $i . "_T" . '1']);
-		if ($m1 == "") continue;		
+		// if ($m1 == "") continue;		
 		
 		$m2 = utf8_encode($mas["Game" . $i . "_T" . '2']);
-		if ($m2 == "") continue;
+		// if ($m2 == "") continue;
 		
 		$mRes = $mas["Game" . $i];	
-		if ($m2 == "") continue;
+		// if ($m2 == "") continue;
 		
 		array_push($teamList,$m1);
 		array_push($teamList,$m2);
@@ -331,7 +331,11 @@ function CalculateQuarterFinals()
 	global $matches;
 	global $player;
 	global $teams;
-		
+	
+	// prüfe, ob EditMode == 1 (Modifikation der DB erlaubt)
+	$query = mysql_query("select * from config;") or die(mysql_error());
+	$dbresult = mysql_fetch_array($query);	
+			
 	// Prüfe zuerst, ob alle Achtelfinalgegner i.O. sind
 	for ($i=48; $i<56; $i++)
 	{

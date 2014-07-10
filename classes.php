@@ -126,6 +126,10 @@ class match
 			$this->matchResPts = 5 * $mult;
 			$this->matchResBgColor = "lightgreen";
 		}
+		else
+		{
+			$this->matchResBgColor = "orange";
+		}
 	}
 	
 	/***********************************************************************
@@ -139,12 +143,12 @@ class match
 		if (in_array($this->team1->name,$teamList))
 		{ 
 			$this->team1Pts = 10;
-			$this->team1BgColor = "forestgreen";
+			$this->team1BgColor = "lightgreen";
 		}
 		if (in_array($this->team2->name,$teamList))
 		{ 
 			$this->team2Pts = 10;
-			$this->team2BgColor = "forestgreen";
+			$this->team2BgColor = "lightgreen";
 		}
 		
 		// check if user match is in opponentList (including cross correlation). If true, calculate matchResPts
@@ -156,8 +160,11 @@ class match
 		if (isset($opponentDictionary["$u1-$u2"]))
 		{	
 			// opponents were found in Dictionary	
+			$this->team1BgColor = "forestgreen";
+			$this->team2BgColor = "forestgreen";
+			
 			$matchRes_Master = $opponentDictionary["$u1-$u2"];
-			//if (!checkGame($matchRes_Master)) return;
+			if (!checkGame($matchRes_Master)) return;   // was commented!!! (why?)
 			
 			// check if full hit -> 20 points
 			if ($this->matchRes == $matchRes_Master) 
@@ -178,6 +185,10 @@ class match
 			{
 				$this->matchResPts = 10;
 				$this->matchResBgColor = "lightgreen";
+			}
+			else
+			{
+				$this->matchResBgColor = "orange";
 			}	
 		} 	
 	}

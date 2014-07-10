@@ -4,11 +4,10 @@ setlocale(LC_ALL, 'UTF-8');
 /***********************************************************************
 * Trikot-Totto Tottomat (Tippspiel für die Fussball EM/WM) 
 * ----------------------------------------------------------------------
-* Datei: form.php
+* Datei: masterform.php
 * 
-* Hauptformular für Trikot-Totto PHP Applikation. Diese Seite ist als
-* Startseite zu definieren. Die Werte der Formularfelder werden als
-* POST-Variablen übergeben.  
+* Hauptformular für Trikot-Totto PHP Applikation. Diese Seite erlaubt 
+* dem Administrator den Zugriff auf fremde Tippzettel. 
 * 
 * Email: wyss@superspider.net
 ***********************************************************************/
@@ -59,102 +58,14 @@ $mas = mysql_fetch_array($query);
 //*****************************************************************************
 // Buttons auswerten (POST-Variablen)
 //***************************************************************************** 
-if (isset($_POST['savetodb']))
+if (isset($_POST['loadplayer']))
 {
-	LoadMatchesFrom("POST");
-	CalculateChampion();
-	SaveMatchesToDB();
+	$player->name = $_POST['loadplayer'];
+	$query = mysql_query("select * from wmtotto2014 where Name = '$player->name';") or die(mysql_error());
+	$playerdb = mysql_fetch_array($query);
+	$player->username = $playerdb['PlayerName'];
 }
-elseif (isset($_POST['calculateeight']))
-{
-	// prüfe, ob EditMode == 1 (Modifikation der DB erlaubt)
-	$query = mysql_query("select * from config;") or die(mysql_error());
-	$dbresult = mysql_fetch_array($query);	
-	if ($dbresult['EditMode'] != 0)
-	{
-		LoadMatchesFrom("POST");
-		CalculateLastSixteenFinals();
-		SaveMatchesToDB();	
-	} else {
-		MessageBox("Speichern nicht mehr erlaubt!");
-		LoadMatchesFrom("DB");
-	}
-	
-}
-elseif (isset($_POST['calculatequarter']))
-{
-	// prüfe, ob EditMode == 1 (Modifikation der DB erlaubt)
-	$query = mysql_query("select * from config;") or die(mysql_error());
-	$dbresult = mysql_fetch_array($query);	
-	if ($dbresult['EditMode'] != 0)
-	{
-		LoadMatchesFrom("POST");
-		CalculateQuarterFinals();
-		SaveMatchesToDB();
-	}
-	else
-	{
-		MessageBox("Speichern nicht mehr erlaubt!");
-		LoadMatchesFrom("DB");
-	}
-	
-}
-elseif (isset($_POST['calculatehalf']))
-{
-	// prüfe, ob EditMode == 1 (Modifikation der DB erlaubt)
-	$query = mysql_query("select * from config;") or die(mysql_error());
-	$dbresult = mysql_fetch_array($query);	
-	if ($dbresult['EditMode'] != 0)
-	{
-		LoadMatchesFrom("POST");
-		CalculateHalfFinals();
-		SaveMatchesToDB();
-	}
-	else
-	{
-		MessageBox("Speichern nicht mehr erlaubt!");
-		LoadMatchesFrom("DB");
-	}	
-}
-elseif (isset($_POST['calculatefinal']))
-{
-	// prüfe, ob EditMode == 1 (Modifikation der DB erlaubt)
-	$query = mysql_query("select * from config;") or die(mysql_error());
-	$dbresult = mysql_fetch_array($query);	
-	if ($dbresult['EditMode'] != 0)
-	{
-		LoadMatchesFrom("POST");
-		CalculateFinals();
-		SaveMatchesToDB();	
-	}
-	else
-	{
-		MessageBox("Speichern nicht mehr erlaubt!");
-		LoadMatchesFrom("DB");
-	}	
-	
-}
-elseif (isset($_POST['calculatechampion']))
-{
-	// prüfe, ob EditMode == 1 (Modifikation der DB erlaubt)
-	$query = mysql_query("select * from config;") or die(mysql_error());
-	$dbresult = mysql_fetch_array($query);	
-	if ($dbresult['EditMode'] != 0)
-	{
-		LoadMatchesFrom("POST");
-		CalculateChampion();
-		SaveMatchesToDB();
-	}
-	else
-	{
-		MessageBox("Speichern nicht mehr erlaubt!");
-		LoadMatchesFrom("DB");
-	}	
-}
-else
-{
-	LoadMatchesFrom("DB");
-}
+LoadMatchesFrom("DB");
 CalculatePlayerScore();
 SavePlayerScoreToDB();
 ?>
@@ -174,7 +85,27 @@ SavePlayerScoreToDB();
     <col style="width:8%">
     <col style="width:16%">
     <col style="width:8%">	
-				
+	
+	<tr>
+		<td colspan=8 STYLE='background-color: lightgray; border:2px solid #ff0000; border-color:red'><b>Bitte Benutzer auswählen:</b>
+		<select name="loadplayer" onchange="this.form.submit()">
+		<?php
+			$query = mysql_query("select Name,PlayerName from wmtotto2014 where PlayerName != 'master';") or die(mysql_error());
+			$playerNames=array();
+			do 
+			{
+				$playerName = mysql_fetch_array($query);
+				$playerNames[] = $playerName[0];
+			} while ( !empty($playerName) );
+			asort($playerNames);
+			foreach ($playerNames as $pName)
+				print "<option>$pName</option>";
+		?>	
+		</select>
+		(Tipp: Liste öffnen und Benutzername mit Tastatur eingeben!) 
+		</td>
+	</tr>
+	<tr><td colspan=8></td></tr>			
 	<tr bgcolor="#BBBBBB"> 
 		<td colspan=4><div class='heading1'>Tippzettel Trikot-Totto WM 2014 </div><? print "Spieler: $player->username ($player->name), Punkte: $player->score"; ?>
 		</td>
@@ -182,9 +113,7 @@ SavePlayerScoreToDB();
 		<td colspan=2><a href='http://www.trikot-totto.ch'>[Zurück zur Hauptseite]</a></td>
     </tr>
 	<tr>
-		<td colspan=1><input style="width: 75px" name='savetodb' type='submit' value='Speichern' /></td>
-		<!-- <td colspan=1><input style="width: 75px" name='random' type='submit' value='Zufall' /></td> -->
-		<td colspan=3>Tippzettel vollständig und korrekt?</td>
+		<td colspan=4>Tippzettel vollständig und korrekt?</td>
 		<? 
 			$eGame = -1;
 			$eTeam = -1;
@@ -304,8 +233,7 @@ SavePlayerScoreToDB();
 	
 	<!-- ************ ACHTELFINAL ********************************* -->
 	<tr bgcolor="gold"> 
-		<td colspan=3><div class='heading1'>Achtelfinal</p></td><td></td>
-		<td colspan=3><input style="width:250px" name='calculateeight' type='submit' value='Achtelfinalgegner neu ausrechnen'/></td>
+		<td colspan=6><div class='heading1'>Achtelfinal</p></td><td></td>
 	</tr>
 	<tr>
 		<td>Erster A</td><td>Zweiter B</td><td>Spiel 49</td><td></td>
@@ -342,8 +270,8 @@ SavePlayerScoreToDB();
 	
 	<!-- ************ VIERTELFINAL ********************************* -->
 	<tr bgcolor="gold"> 
-		<td colspan=3><div class='heading1'>Viertelfinal</p></td><td></td>
-		<td colspan=3><input style="width:250px" name='calculatequarter' type='submit' value='Viertelfinalgegner neu ausrechnen'/></td>
+		<td colspan=6><div class='heading1'>Viertelfinal</p></td><td></td>
+		
 	</tr>
 	<tr>
 		<td>Sieger 53</td><td>Sieger 54</td><td>Spiel 57</td><td></td>
@@ -364,9 +292,9 @@ SavePlayerScoreToDB();
 	
 	<!-- ************ HALBFINAL ********************************* -->
 	<tr bgcolor="gold"> 
-		<td colspan=3><div class='heading1'>Halbfinal</p></td>
+		<td colspan=6><div class='heading1'>Halbfinal</p></td>
 		<td></td>
-		<td colspan=3><input style="width:250px" name='calculatehalf' type='submit' value='Halbfinalgegner neu ausrechnen'/></td>
+		
 	</tr>
 	<tr>
 		<td>Sieger 57</td><td>Sieger 58</td><td >Spiel 61</td><td></td>
@@ -379,9 +307,8 @@ SavePlayerScoreToDB();
 
 	<!-- ************ FINALSPIELE ********************************* -->
 	<tr bgcolor="gold"> 
-		<td colspan=3><div class='heading1'>Final</p></td>
+		<td colspan=6><div class='heading1'>Final</p></td>
 		<td></td>
-		<td colspan=3><input style="width:250px" name='calculatefinal' type='submit' value='Finalgegner neu ausrechnen'/></td>
 	</tr>
 	<tr>
 		<td colspan=4></td><td>Verlierer 61</td><td>Verlierer 62</td><td>Spiel 63</td>
@@ -398,7 +325,7 @@ SavePlayerScoreToDB();
 	<tr bgcolor="gold">
 		<td colspan=3></p></td>
 		<td></td>
-		<td colspan=3><input style="width:250px" name='calculatechampion' type='submit' value='Weltmeister berechnen'/></td>
+		<td colspan=3></td>
 	</tr>
 	<tr>
 		<?
