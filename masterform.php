@@ -107,7 +107,7 @@ SavePlayerScoreToDB();
 	</tr>
 	<tr><td colspan=8></td></tr>			
 	<tr bgcolor="#BBBBBB"> 
-		<td colspan=4><div class='heading1'>Tippzettel Trikot-Totto WM 2014 </div><? print "Spieler: $player->username ($player->name), Punkte: $player->score"; ?>
+		<td colspan=4><div class='heading1'>Tippzettel Trikot-Totto WM 2014 </div><? print "Spieler: $player->username ($player->name)"; /*, Punkte: $player->score;*/ ?>
 		</td>
 		<td colspan=2><a href='javascript:window.print()'>[Seite drucken]</a></td>
 		<td colspan=2><a href='http://www.trikot-totto.ch'>[Zurück zur Hauptseite]</a></td>

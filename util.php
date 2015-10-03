@@ -27,7 +27,7 @@ function CalculatePlayerScore()
 	//$query = mysql_query("select * from wmtotto2014 where PlayerName = '" .$player->username. "';") or die(mysql_error());
 	//$usr = mysql_fetch_array($query);	
 
-	$DebugPlayer = "dummy";
+	$DebugPlayer = "hmuster";
 	$PlayerName = $player->username;
 
 	// *****************************************************************
