@@ -16,6 +16,8 @@ require_once('teaminit.php');
 
 global $username;
 global $mas;
+global $IsGroupMember;
+global $GroupFilter;
 
 // Ausgabe des HTML Headers mit CSS Styles
 printHeader();
@@ -35,27 +37,20 @@ if ($username == "") die ('Der Benutzer ist nicht angemeldet!');
 // Berechnung der Punkte aller Spieler
 //***************************************************************************** 
 // Verbindung zum MySQL Server herstellen und Datenbank wählen
-$db=mysql_connect($db_serv, $db_user, $db_pass) or die ('I cannot connect to the database because: ' . mysql_error()); 
-mysql_select_db($db_name, $db) or die('ERROR!');
+$db = new PDO('mysql:host='.$db_serv.';dbname='.$db_name.';charset=utf8', $db_user, $db_pass);
 
-$query = mysql_query("select count(*) from wmtotto2014;") or die(mysql_error());
-$qresult = mysql_fetch_array($query);
-
-//DebugMsg("<p>Die Datenbank hat $qresult[0] Eintraege (inkl. Master)</p>");
+$query = $db->query("select count(*) from ".$db_table.";");
+$qresult = $query->fetch(PDO::FETCH_ASSOC);
+DebugMsg("<p>Die Datenbank hat ".$qresult["count(*)"]. " Einträge (inkl. Master)</p>");
 
 // Laden der Matches des master-Eintrags
-$queryMaster = mysql_query("select * from wmtotto2014 where PlayerName = 'master';") or die(mysql_error());
-$mas = mysql_fetch_array($queryMaster);
+$query = $db->query("select * from ".$db_table." where PlayerName = 'master';");
+$mas = $query->fetch(PDO::FETCH_ASSOC);
 
-// Laden der Matches aller User
-$queryList = mysql_query("select * from wmtotto2014 where PlayerName != 'master';") or die(mysql_error());		
-$PlayerTable = array();
-do
+$query = $db->query("select * from ".$db_table." where PlayerName != 'master';");
+while ($row = $query->fetch(PDO::FETCH_ASSOC))
 {
-	$qresult = mysql_fetch_array($queryList);
-
-	$FormComplete = $qresult['FormComplete'];
-	if ($FormComplete != 1) continue;
+	if ($row["FormComplete"] != "1") continue;
 	
 	// erstellen aller Teams and Matches
 	$teams = array();
@@ -64,8 +59,9 @@ do
 		
 	$player = NEW player();
 	$player->score = 0;
-	$player->username = $qresult['PlayerName'];
-	$player->name = $qresult['Name'];
+	$player->username = $row['PlayerName'];
+	$player->name = $row['Name'];
+	$player->groupField = $row['GroupField'];
 	
 	// Lade die Spielresultate aus der DB und berechne Punkte für diesen Spieler
 	LoadMatchesFrom("DB");
@@ -74,32 +70,72 @@ do
 	// Speichere Punkte für diesen Spieler in der Datenbank
 	SavePlayerScoreToDB();
 	
-	$PlayerTable[] = $player;	
-	$PlayerList[$player->name] = $player->score;
+	// $PlayerTable[] = $player;	
+	$ScoreTable[$player->name] = array($player->score,$player->username,$player->groupField);
 }
-while ( !empty($qresult) );
-mysql_close($db);
-
+//*****************************************************************************
+// Buttons auswerten (POST-Variablen)
+//***************************************************************************** 
+if (isset($_POST['loadteam']))
+{
+	$GroupFilter =  $_POST['loadteam'];	
+	if ($GroupFilter == "(kein Filter)")
+		$GroupFilter = "";
+}
+//*****************************************************************************
+// Prüfe, ob der User ein Gruppenfeldeintrag hat
+//*****************************************************************************
+$query = $db->query("select * from ".$db_table." where PlayerName = '".$username."';");
+$row = $query->fetch(PDO::FETCH_ASSOC);
+if ($row['GroupField'] != "")
+{
+	$TeamName = $row['GroupField'];
+	DebugMsg("<p>Der Spieler ist in der Gruppe: ".$TeamName);
+	$IsGroupMember = true;
+} else {
+	$IsGroupMember = false;
+}
 //*****************************************************************************
 // Anzeigen der Spielertabelle 
 //***************************************************************************** 
-print "<form action='form.php' method='post'>";
+print "<form action='".$_SERVER['PHP_SELF']."' method='post'>";
 print "<table align='center' width='800px' border='0' cellspacing='0' cellpadding='1'>";
+print "<col style='width:10%'>";
+print "<col style='width:35%'>";
+print "<col style='width:25%'>";
+print "<col style='width:25%'>";
 
-print "<tr><td colspan=2></td><td align=right><a href='http://www.trikot-totto.ch'>[Zurück zur Hauptseite]</a></td></tr>";
-print "<tr bgcolor='gold'> <td><b>Rang</b></td><td><b>Name</b></td><td><b>Punkte</b></td></tr>";
+if ($IsGroupMember)
+{
+	print "<tr><td colspan=3><b>Gruppenfilter auswählen: </b>";
+	print "<select name='loadteam' onchange='this.form.submit()'>";
+	print "<option></option>";
+	print "<option>".$TeamName."</option>";
+	print "<option>(kein Filter)</option>";
+	print "</td><td align=right><a href='http://www.trikot-totto.ch'>[Zurück zur Hauptseite]</a></td></tr>";
+	
+} else {
+	print "<tr><td colspan=4 align=right><a href='http://www.trikot-totto.ch'>[Zurück zur Hauptseite]</a></td></tr>";
+}
+print "<tr bgcolor='gold'> <td><b>Rang</b></td><td><b>Name</b></td><td><b>Gruppe</b></td><td><b>Punkte</b></td></tr>";
 
 $bg = 0;
 $color[0] = "#DDDDDD";
 $color[1] = "#CCCCCC";
+$color[2] = "lightgreen";
 
 $rank = 1;
 $ctr = 1;
-arsort($PlayerList);
+arsort($ScoreTable);
 $old_score = 0;
 
-foreach ($PlayerList as $key => $score) {		
+foreach ($ScoreTable as $Player => $PlayerData) 
+{		
+	$score = $PlayerData[0];
+	$uname = $PlayerData[1];
+	$gfield = $PlayerData[2];
 	
+	// Berechne die Rangliste
 	if ($old_score != $score) {
 		$rank = $ctr++;
 		if ($bg == 0){
@@ -113,16 +149,28 @@ foreach ($PlayerList as $key => $score) {
 		$ctr++;
 	}
 	
-	foreach ($PlayerTable as $TmpPlayer)
-		if ($key == $TmpPlayer->name)
-			$uname = $TmpPlayer->username;
-	
-	if ($key == $user->name )
-		print "<tr bgcolor='lightgreen'><td>$rank</td><td>$key ($uname)</td><td>$score</td></tr>";
+	// Anzeige
+	if ($GroupFilter == "")
+	{
+		if ($Player == $user->name)
+			$bgcolor = $color[2];
+		else
+			$bgcolor=$color[$bg];	
+		print "<tr bgcolor='".$bgcolor."'><td>$rank</td><td>$Player (".$uname.")</td><td>".$gfield."</td><td>".$score."</td></tr>";
+	}
 	else
-		print "<tr bgcolor=$color[$bg]><td>$rank</td><td>$key ($uname)</td><td>$score</td></tr>";
+	{
+		if ($GroupFilter == $gfield)
+		{
+			if ($Player == $user->name)
+				$bgcolor = $color[2];
+			else
+				$bgcolor=$color[$bg];	
+			print "<tr bgcolor='".$bgcolor."'><td>$rank</td><td>$Player (".$uname.")</td><td>".$gfield."</td><td>".$score."</td></tr>";
+		}
+		
+	}
 	$old_score = $score;
 }
-
 print "</table></form>";
 ?>		

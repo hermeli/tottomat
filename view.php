@@ -22,7 +22,7 @@ function printHeader()
 	<html>
 	<head>
 		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-		<title>Trikot-Totto WM 2014 Brasilien</title>
+		<title>Trikot-Totto EM 2016 Frankreich</title>
 		<link href="favicon.ico" rel="shortcut icon" type="image/x-icon" />
 		<meta name="generator" content="Online Tottomat" />
 		
@@ -75,9 +75,10 @@ function MessageBox($message)
  ****************************************************************************/
 function DebugMsg($message)
 {
-	global $DEBUG;
+	global $DEBUG_PLAYER;
+	global $player;
 	
-	if ($DEBUG == 1)
+	if ($player->username == $DEBUG_PLAYER)
 		print $message;  
 }
 /****************************************************************************
@@ -116,13 +117,28 @@ function PrintFinalMatch($game)
 {
 	global $mas;
 	global $matches;
-	
-	$team1 = $matches[$game]->team1->name;
-	$team1BgColor = $matches[$game]->team1BgColor;
-	
-	$team2 = $matches[$game]->team2->name;
-	$team2BgColor = $matches[$game]->team2BgColor;
-	
+		
+	if ($matches[$game]->team1 != NULL)
+	{
+		$team1 = $matches[$game]->team1->name;
+		$team1BgColor = $matches[$game]->team1BgColor;
+	}
+	else
+	{
+		$team1 = "";
+		$team1BgColor = "lightgray";
+	}	 
+	if ($matches[$game]->team2 != NULL)
+	{
+		$team2 = $matches[$game]->team2->name;
+		$team2BgColor = $matches[$game]->team2BgColor;
+	}
+	else
+	{
+		$team2 = "";
+		$team2BgColor = "lightgray";
+	}
+		
 	$matchRes = $matches[$game]->matchRes;
 	$matchResBgColor = $matches[$game]->matchResBgColor;
 	
@@ -133,5 +149,6 @@ function PrintFinalMatch($game)
 	print "<td><input readonly='readonly' STYLE='background-color: $team1BgColor;' size='13' name='$nameT1' value='$team1'></td>";
 	print "<td><input readonly='readonly' STYLE='background-color: $team2BgColor;' size='13' name='$nameT2' value='$team2'></td>";
 	print "<td valign='top'><input STYLE='background: $matchResBgColor;' size='5' name='$name' type='text' maxlength='50' value='$matchRes'/></td>";
+	
 }
 ?>

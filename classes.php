@@ -10,6 +10,19 @@ setlocale(LC_ALL, 'UTF-8');
 ***********************************************************************/
 
 /***********************************************************************
+* (static) CLASS tottomat
+* Mainly holds static values for configuration.
+***********************************************************************/
+class tottomat
+{
+	const ilastGroupGame=35;
+	const iEight=36;
+	const iQuarter=44;
+	const iHalf=48;
+	const iFinal=50;
+}
+
+/***********************************************************************
 * CLASS player
 * Basic class for a player. Mainly holds values like 'TotalGoals'
 ***********************************************************************/
@@ -19,6 +32,7 @@ class player
 	var $totalGoals;
 	var $name;
 	var $username;
+	var $groupField;
 	var $email;
 	var $registerDate;
 	var $champion;
@@ -44,9 +58,41 @@ class team
 		$this->group = $grp;
 		$this->name = $nme;
 		
+		// Statistik aus Gruppenspielen
 		$this->score = 0;
 		$this->diffgoals = 0;
 		$this->goals = 0;
+		
+		// Statistik aus Direktbegegnung
+		$this->score_d = 0;
+		$this->diffgoals_d = 0;
+		$this->goals_d = 0;
+		
+	}
+}
+/***********************************************************************
+* CLASS group
+* Basic class for a group. A group has multiple matches
+***********************************************************************/
+class group
+{
+	var $groupName;
+	var $teams = array();
+	var $matches = array();
+	
+	function group($teams,$matches,$nme)
+	{
+		$this->groupName = $nme;
+		foreach ($teams as $team)
+		{
+			if ($this->groupName == $team->group)
+				array_push($this->teams,$team); 
+		}
+		foreach ($matches as $match)
+		{
+			if ($this->groupName == $match->group)
+				array_push($this->matches,$match); 
+		}
 	}
 }
 /***********************************************************************
@@ -220,7 +266,7 @@ class match
 		if ( $parts[1] > 99) return 0;
 		
 		// check even final game
-		if ( ($this->matchNr>=48) && ($parts[0] == $parts[1]) ) 
+		if ( ($this->matchNr>=tottomat::iEight) && ($parts[0] == $parts[1]) ) 
 			return 0;
 	
 		return 1;
